@@ -13,13 +13,13 @@ from torchvision import transforms
 from tqdm import tqdm
 
 # from ColorEncoder import ColorEncoder
-from models import ColorEncoder, ColorUNet
-from vgg_model import vgg19
-from data.data_loader import MultiResolutionDataset
+from .models import ColorEncoder, ColorUNet
+from .vgg_model import vgg19
+from .data.data_loader import MultiResolutionDataset
 
-from utils import tensor_lab2rgb
+from .utils import tensor_lab2rgb
 
-from distributed import (
+from .distributed import (
     get_rank,
     synchronize,
     reduce_loss_dict,
@@ -290,7 +290,7 @@ if __name__ == "__main__":
 
     args.start_iter = 0
 
-    vggnet = vgg19(pretrained_path = './experiments/VGG19/vgg19-dcbb9e9d.pth', require_grad = False)
+    vggnet = vgg19(pretrained_path = 'experiments/VGG19/vgg19-dcbb9e9d.pth', require_grad = False)
     vggnet = vggnet.to(device)
     vggnet.eval()
 

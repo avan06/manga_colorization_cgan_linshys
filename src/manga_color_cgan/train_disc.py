@@ -14,13 +14,13 @@ from tqdm import tqdm
 from torch.autograd import Variable
 
 # from ColorEncoder import ColorEncoder
-from models import ColorEncoder, ColorUNet
-from discriminator import Discriminator
-from data.data_loader import MultiResolutionDataset
+from .models import ColorEncoder, ColorUNet
+from .discriminator import Discriminator
+from .data.data_loader import MultiResolutionDataset
 
-from utils import tensor_lab2rgb
+from .utils import tensor_lab2rgb
 
-from distributed import (
+from .distributed import (
     get_rank,
     synchronize,
     reduce_loss_dict,

@@ -22,3 +22,5 @@ test_datasets/*
 !/test_datasets/sketch_test/out
 train_datasets/
 training_logs/
+
+.vs

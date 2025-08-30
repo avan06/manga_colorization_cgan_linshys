@@ -1,3 +1,118 @@
+# Version
+
+This release refactors the [original codebase](https://github.com/linshys/Example_Based_Manga_Colorization---cGAN) by moving it under the `src/manga_color_cgan` directory and introduces a `pyproject.toml` file to support installation via `pip`.
+
+```bash
+pip install git+https://github.com/avan06/manga_colorization_cgan_linshys.git
+```
+## My environment for reference
+
+- Python = 3.10.11
+- Torch = 2.8.0
+- Torchvision = 0.23.0
+- Cuda = 12.8
+
+# Usage
+
+## Load Model
+
+```python
+from manga_color_cgan.models import ColorEncoder, ColorUNet
+
+ckpt_path = gray_model_path if model_name == "Color2Manga_gray" else sketch_model_path
+
+# Added `weights_only=False` to ensure compatibility when loading older checkpoint files with newer PyTorch versions.
+ckpt = torch.load(ckpt_path, map_location=_device, weights_only=False)
+
+colorEncoder = ColorEncoder(vgg19_model_path=vgg19_model_path).to(_device)
+colorEncoder.load_state_dict(ckpt["colorEncoder"])
+colorEncoder.eval()
+
+colorUNet = ColorUNet().to(_device)
+colorUNet.load_state_dict(ckpt["colorUNet"])
+colorUNet.eval()
+```
+
+## Inference
+
+```python
+from manga_color_cgan.inference import preprocessing, Lab2RGB_out
+
+# --- Load the reference image ---
+ref_img_pil = Image.open(ref_image.name).convert("RGB")
+
+# --- Define reference resolution (make divisible by 16) ---
+ref_res_selection = 256  # depending on your design
+ref_size = ((int(ref_res_selection) // 16) * 16,
+            (int(ref_res_selection) // 16) * 16)
+
+# --- Preprocess and extract color vector ---
+ref_img_tensor, _ = preprocessing(ref_img_pil)
+ref_img_tensor = ref_img_tensor.to(_device)
+
+# Resize reference image tensor for consistency
+ref_img_resized = F.interpolate(
+    ref_img_tensor / 255.,
+    size=ref_size,  # (H, W)
+    mode='bilinear',
+    align_corners=False
+)
+
+# Extract color vector from reference image
+color_vector = None
+with torch.no_grad():
+    color_vector = colorEncoder(ref_img_resized)
+
+
+# --- Load the manga image to be colorized ---
+manga_img_pil = Image.open(manga_file.name).convert("RGB")
+original_width, original_height = manga_img_pil.size
+
+# Preprocess manga image (both RGB and Lab tensors)
+manga_img_tensor, manga_img_lab_tensor = preprocessing(manga_img_pil)
+manga_img_tensor = manga_img_tensor.to(_device)
+manga_img_lab_tensor = manga_img_lab_tensor.to(_device)
+
+processing_size = (original_height, original_width)
+
+with torch.no_grad():
+    # Downsample the L channel to reference size
+    manga_l_resized = F.interpolate(
+        manga_img_lab_tensor[:, :1, :, :] / 50.,
+        size=ref_size,
+        mode='bilinear',
+        align_corners=False
+    )
+
+    # Generate colorized AB channels using the color vector
+    fake_ab = colorUNet((manga_l_resized, color_vector))
+
+    # Upscale AB channels back to the original manga size
+    fake_ab = F.interpolate(
+        fake_ab * 110,
+        size=processing_size,
+        mode='bilinear',
+        align_corners=False
+    )
+
+    # Combine with the original L channel and convert back to RGB
+    manga_l_resized_final = F.interpolate(
+        manga_img_lab_tensor[:, :1, :, :],
+        size=processing_size,
+        mode='bilinear',
+        align_corners=False
+    )
+    fake_img_lab = torch.cat((manga_l_resized_final, fake_ab), 1)
+
+    # Convert Lab tensor to RGB numpy array
+    colorized_image_np = Lab2RGB_out(fake_img_lab)
+
+return colorized_image_np
+```
+
+___
+___
+
 # Reference-Image-Embed-Manga-Colorization
 
 An amazing manga colorization project 

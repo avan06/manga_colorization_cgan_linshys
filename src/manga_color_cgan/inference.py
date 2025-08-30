@@ -6,8 +6,8 @@ import torch
 import torch.nn.functional as F
 
 from PIL import Image
-from models import ColorEncoder, ColorUNet
-from extractor.manga_panel_extractor import PanelExtractor
+from .models import ColorEncoder, ColorUNet
+from .extractor.manga_panel_extractor import PanelExtractor
 import argparse
 
 os.environ["CUDA_VISIBLE_DEVICES"] = '0'

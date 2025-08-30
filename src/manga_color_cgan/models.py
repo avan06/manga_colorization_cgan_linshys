@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from vgg_model import vgg19
+from .vgg_model import vgg19
 
 class DoubleConv(nn.Module):
     """(convolution => [BN] => ReLU) * 2"""
@@ -142,11 +142,11 @@ class UpBlock(nn.Module):
 
 
 class ColorEncoder(nn.Module):
-    def __init__(self, color_dim=512):
+    def __init__(self, color_dim=512, vgg19_model_path=None):
         super(ColorEncoder, self).__init__()
 
         # self.vgg = vgg19(pretrained_path=None)
-        self.vgg = vgg19()
+        self.vgg = vgg19(pretrained_path=vgg19_model_path)
 
         self.feature2vector = nn.Sequential(
             nn.Conv2d(color_dim, color_dim, 4, 2, 2), # 8x8

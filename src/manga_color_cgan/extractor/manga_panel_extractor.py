@@ -13,7 +13,7 @@ from PIL import ImageFont
 from PIL import ImageDraw
 import cv2
 # project
-from utils import get_files, load_image
+from ..utils import get_files, load_image
 from skimage import io
 
 
